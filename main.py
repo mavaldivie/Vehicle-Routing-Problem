@@ -41,18 +41,27 @@ def solve(distances: [[int]], deliveries: [int], pickups: [int], load_time: [int
     def deliveries_callback(from_index):
         from_node = manager.IndexToNode(from_index)
         if from_node % 2 == 1: return 0
-        return data['deliveries'][(from_node + 1) // 2]
+        return -data['deliveries'][(from_node + 1) // 2]
     deliveries_callback_index = routing.RegisterUnaryTransitCallback(deliveries_callback)
+    deliveries_str = 'deliveries'
     routing.AddDimensionWithVehicleCapacity(
-        deliveries_callback_index, 0, data['vehicle_capacities'], True, 'deliveries')
+        deliveries_callback_index, 0, data['vehicle_capacities'], False, deliveries_str)
 
     def pickups_callback(from_index):
         from_node = manager.IndexToNode(from_index)
         if from_node % 2 == 1: return 0
-        return -data['pickups'][(from_node + 1) // 2] + data['deliveries'][from_node // 2]
+        return data['pickups'][(from_node + 1) // 2] - data['deliveries'][(from_node + 1) // 2]
     pickups_callback_index = routing.RegisterUnaryTransitCallback(pickups_callback)
+    pickups_str = 'pickups'
     routing.AddDimensionWithVehicleCapacity(
-        pickups_callback_index, 0, data['vehicle_capacities'], True, 'pickups')
+        pickups_callback_index, 0, data['vehicle_capacities'], False, pickups_str)
+
+    deliveries_dimension = routing.GetDimensionOrDie(deliveries_str)
+    pickups_dimension = routing.GetDimensionOrDie(pickups_str)
+    for idx in range(manager.GetNumberOfVehicles()):
+        index = routing.Start(idx)
+        routing.solver().Add(
+            deliveries_dimension.CumulVar(index) == pickups_dimension.CumulVar(index))
 
     def distance_callback(from_index, to_index):
         from_node = manager.IndexToNode(from_index)
@@ -87,6 +96,7 @@ def print_solution(data, manager, routing, solution):
     print(f'Objective: {solution.ObjectiveValue()}')
     total_distance = 0
     total_load = 0
+    maximum_distance = 0
     for vehicle_id in range(data['num_vehicles']):
         index = routing.Start(vehicle_id)
         plan_output = 'Route for vehicle {}:\n'.format(vehicle_id)
@@ -110,7 +120,9 @@ def print_solution(data, manager, routing, solution):
         print(plan_output)
         total_distance += route_distance
         total_load += route_load
+        maximum_distance = max(maximum_distance, route_distance)
     print('Total distance of all routes: {}m'.format(total_distance))
+    print('Maximum distance of all routes: {}'.format(maximum_distance))
     print('Total load of all routes: {}'.format(total_load))
 
 
@@ -135,11 +147,11 @@ distances = [
     [776, 868, 1552, 560, 674, 1050, 1278, 742, 1084, 810, 1152, 274, 388, 422, 764, 0, 798],
     [662, 1210, 754, 1358, 1244, 708, 480, 856, 514, 468, 354, 844, 730, 536, 194, 798, 0],
 ]
-#in_demands = [0, 1, 1, 2, 4, 2, 4, 8, 8, 1, 2, 1, 2, 4, 4, 8, 8]
-in_demands = [0, 1, 2, 3, 1, 1, 2, 1, 5, 1, 1, 1, 2, 1, 1, 4, 1]
-out_demands = [0, 2, 1, 2, 2, 1, 4, 0, 1, 5, 2, 0, 1, 0, 2, 0, 2]
-#out_demands = [0, 1, 3, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-load_time= [0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2]
-capacities = [3, 4, 5, 6]
 
-solve(distances[:5][:5], in_demands[:5], out_demands[:5], load_time[:5], capacities)
+in_demands = [0, 50, 20, 30, 20, 40, 45, 30, 50, 35, 1, 1, 2, 1, 1, 4, 1]
+out_demands = [0, 20, 30, 35, 15, 30, 40, 25, 50, 20, 2, 0, 1, 0, 2, 0, 2]
+load_time= [0, 500, 120, 300, 200, 400, 500, 250, 500, 300, 2, 2, 2, 2, 2, 2, 2]
+capacities = [70, 80, 90, 100]
+
+nodes = 10
+solve(distances[:nodes][:nodes], in_demands[:nodes], out_demands[:nodes], load_time[:nodes], capacities)

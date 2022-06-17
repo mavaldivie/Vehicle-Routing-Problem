@@ -43,12 +43,12 @@ Para resolver el problema se utilizó la suite ***Google OR-Tools***, el cual es
 Para que la solución obtenida tuviese en cuenta los tiempos de carga y descarga en los clientes se decidió crear un grafo G'(V',A'), el cual consiste en, para cada nodo v que pertenece a un cliente, duplicarlo en un nodo v' y colocar una arista desde v a v' con costo igual al tiempo de carga/descarga del cliente v. Además, toda arista u -> v del grafo original se elimina y se coloca una arista en el nuevo grafo desde u' hasta v. De esta forma se asegura que cuando una ruta para un vehículo dado pase por un nodo v, tenga en cuenta en el costo de la ruta final el valor de la arista v -> v' que corresponde al tiempo de carga/descarga de dicho nodo.
 ```python
 dist = [[oo for _ in range(2 * nodes - 1)] for _ in range(2 * nodes - 1)]
-	for i in range(nodes):
-        for j in range(nodes):
-            u = i if i == 0 else 2 * i
-            v = j if j == 0 else 2 * j - 1
-            dist[u][v] = distances[i][j]
-        if i != 0: dist[2 * i - 1][2 * i] = load_time[i]
+for i in range(nodes):
+    for j in range(nodes):
+        u = i if i == 0 else 2 * i
+        v = j if j == 0 else 2 * j - 1
+        dist[u][v] = distances[i][j]
+if i != 0: dist[2 * i - 1][2 * i] = load_time[i]
 ```
 
 ### Demandas de los clientes
@@ -70,9 +70,9 @@ routing.AddDimensionWithVehicleCapacity(pickups_callback_index, 0,
 Además se añadió una restricción al modelo para asegurar que el valor inicial de la cantidad de balones que carga cada vehículo sea la misma para ambas dimensiones.
 ```python
 for idx in range(manager.GetNumberOfVehicles()):
-        index = routing.Start(idx)
-        routing.solver().Add(deliveries_dimension.CumulVar(index) 
-        	== pickups_dimension.CumulVar(index))
+    index = routing.Start(idx)
+    routing.solver().Add(deliveries_dimension.CumulVar(index) 
+	== pickups_dimension.CumulVar(index))
 ```
 
 

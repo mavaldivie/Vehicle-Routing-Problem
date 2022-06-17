@@ -62,7 +62,7 @@ routing.AddDimensionWithVehicleCapacity(deliveries_callback_index, 0,
 ### Demandas de entrega de balones vacíos de los clientes
 
 Satisfacer las demandas de balones vacíos fue un poco más complicado, ya que se necesitaba además que la cantidad de balones vacíos y llenos que llevara el vehículo en cualquier momento fuera menor o igual que su capacidad, por tanto esta restricción no podía ser independiente de la de demanda de balones llenos. Para solucionarlo se añadió una dimensión para asegurar que la cantidad de balones vacíos recogidos menos la cantidad de balones entregados más la carga inicial sea siempre menor igual que la capacidad del vehículo. Esta dimensión se añadió con el flag ***fix\_start\_cumul\_to\_zero*** en false para simular el valor de la carga inicial.
-```
+```python
 routing.AddDimensionWithVehicleCapacity(pickups_callback_index, 0, 
 	data['vehicle_capacities'], False, pickups_str)
 ```
@@ -73,7 +73,6 @@ for idx in range(manager.GetNumberOfVehicles()):
         index = routing.Start(idx)
         routing.solver().Add(deliveries_dimension.CumulVar(index) 
         	== pickups_dimension.CumulVar(index))
-\end{lstlisting}
 ```
 
 
